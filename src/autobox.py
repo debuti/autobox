@@ -35,113 +35,162 @@ class Panel:
     for i in range(0, tabs):
         self.points.append({"x": i*self._wtabsize*2 + (offseta if i == 0 else 0),
                             "y": offseta})
+        if (offseta != 0 and i!=0): self.drillPoints.append(self.points[-1])
         self.points.append({"x": i*self._wtabsize*2 + self._wtabsize,
                             "y": offseta})
+        if (offseta != 0): self.drillPoints.append(self.points[-1])
         self.points.append({"x": i*self._wtabsize*2 + self._wtabsize, 
                             "y": offsetb})
+        if (offsetb != 0): self.drillPoints.append(self.points[-1])
         self.points.append({"x": i*self._wtabsize*2 + self._wtabsize*2 - (offseta if i == tabs-1 else 0) , 
                             "y": offsetb})
+        if (offsetb != 0 and i!=tabs-1): self.drillPoints.append(self.points[-1])
 
     for i in range(0, tabs):
         self.points.append({"x": W - offseta, 
                             "y": i*self._htabsize*2 + (offsetb if i == 0 else 0)})
+        if (offseta != 0 and i!=0): self.drillPoints.append(self.points[-1])
         self.points.append({"x": W - offseta, 
                             "y": i*self._htabsize*2 + self._htabsize})
+        if (offseta != 0): self.drillPoints.append(self.points[-1])
         self.points.append({"x": W - offsetb, 
                             "y": i*self._htabsize*2 + self._htabsize})
+        if (offsetb != 0): self.drillPoints.append(self.points[-1])
         self.points.append({"x": W - offsetb , 
                             "y": i*self._htabsize*2 + self._htabsize*2 - (offsetb if i == tabs-1 else 0)})
+        if (offsetb != 0 and i!=tabs-1): self.drillPoints.append(self.points[-1])
         
     for i in reversed(range(0, tabs)):
         self.points.append({"x": i*self._wtabsize*2 + self._wtabsize*2 - (offsetb if i == tabs-1 else 0), 
                             "y": H - offsetb})
+        if (offsetb != 0 and i!=tabs-1): self.drillPoints.append(self.points[-1])
         self.points.append({"x": i*self._wtabsize*2 + self._wtabsize, 
                             "y": H - offsetb})
+        if (offsetb != 0): self.drillPoints.append(self.points[-1])
         self.points.append({"x": i*self._wtabsize*2 + self._wtabsize, 
                             "y": H - offseta})
+        if (offseta != 0): self.drillPoints.append(self.points[-1])
         self.points.append({"x": i*self._wtabsize*2 + (offsetb if i == 0 else 0), 
                             "y": H - offseta})
+        if (offseta != 0 and i!=0): self.drillPoints.append(self.points[-1])
 
     for i in reversed(range(0, tabs)):
         self.points.append({"x": offsetb, 
                             "y": i*self._htabsize*2 + self._htabsize*2 - (offseta if i == tabs-1  else 0)})
+        if (offsetb != 0 and i!=tabs-1): self.drillPoints.append(self.points[-1])
         self.points.append({"x": offsetb, 
                             "y": i*self._htabsize*2 + self._htabsize})
+        if (offsetb != 0): self.drillPoints.append(self.points[-1])
         self.points.append({"x": offseta, 
                             "y": i*self._htabsize*2 + self._htabsize})
+        if (offseta != 0): self.drillPoints.append(self.points[-1])
         self.points.append({"x": offseta, 
                             "y": i*self._htabsize*2 + (offseta if i == 0  else 0)})
+        if (offseta != 0 and i != 0): self.drillPoints.append(self.points[-1])
         
 #    self.points.append({"x": 0, "y": 0})
 
 # Function declarations
-def pointsToSvg(front, back, left, right, top, bottom):
+def pointsToSvg(front, back, left, right, top, bottom, opts):
     MARGIN = 10;
     #SHAPE="polyline";
     SHAPE="polygon";
-    STYLE = 'fill:none; stroke:black; stroke-width:1';
+
     canvash = MARGIN+top.H+MARGIN+front.H+MARGIN+bottom.H
     canvasw = MARGIN+front.W+MARGIN+right.W+MARGIN+back.W+MARGIN+left.W+MARGIN
     
     result = '<?xml version="1.0" encoding="utf-8"?>'+'\n'
     result += '<svg version="1.1" xmlns="http://www.w3.org/2000/svg" height="'+str(canvash)+'mm" width="'+str(canvasw)+'mm">'+'\n'
+
     #result += '<g transform="scale(35.43307)">'+'\n'
-    
-    result += '<g transform="translate('+str(MARGIN+front.W+MARGIN)+','+str(MARGIN)+')">'+'\n'
-    result += '<'+SHAPE+' points="'
+    result += '  '+'<g fill="none" stroke="black" stroke-width="1">'     
+
+    result += '  '+'  '+'<g transform="translate('+str(MARGIN+front.W+MARGIN)+','+str(MARGIN)+')">'+'\n'
+    result += '  '+'  '+'  '+'<'+SHAPE+' points="'
     for point in top.points:
         result += str(point["x"])+","+str(point["y"])+" "
-    result += '" style="'+STYLE+'"/>'+'\n'
-    result += '</g>'+'\n'
+    result += '"/>'+'\n'
+    if opts["drillPoints"]:
+        result += '  '+'  '+'  '+'<g>'   +'\n'
+        for point in top.drillPoints:
+            result += '  '+'  '+'  '+'  '+'<circle cx="'+str(point["x"])+'" cy="'+str(point["y"])+'" r="2" stroke="red" fill="transparent" stroke-width="1"/>'+'\n'
+        result += '  '+'  '+'  '+'</g>'+'\n'     
+    result += '  '+'  '+'</g>'+'\n'
     
-    result += '<g transform="translate('+str(MARGIN)+','+str(MARGIN+top.H+MARGIN)+')">'+'\n'
-    result += '<'+SHAPE+' points="'
+    result += '  '+'  '+'<g transform="translate('+str(MARGIN)+','+str(MARGIN+top.H+MARGIN)+')">'+'\n'
+    result += '  '+'  '+'  '+'<'+SHAPE+' points="'
     for point in front.points:
         result += str(point["x"])+","+str(point["y"])+" "
-    result += '" style="'+STYLE+'"/>'+'\n'
-    result += '</g>'+'\n'
+    result += '"/>'+'\n'
+    if opts["drillPoints"]:
+        result += '  '+'  '+'  '+'<g>'   +'\n'
+        for point in front.drillPoints:
+            result += '  '+'  '+'  '+'  '+'<circle cx="'+str(point["x"])+'" cy="'+str(point["y"])+'" r="2" stroke="red" fill="transparent" stroke-width="1"/>'+'\n'
+        result += '  '+'  '+'  '+'</g>'+'\n'     
+    result += '  '+'  '+'</g>'+'\n'
 
-    result += '<g transform="translate('+str(MARGIN+front.W+MARGIN)+','+str(MARGIN+top.H+MARGIN)+')">'+'\n'
-    result += '<'+SHAPE+' points="'
+    result += '  '+'  '+'<g transform="translate('+str(MARGIN+front.W+MARGIN)+','+str(MARGIN+top.H+MARGIN)+')">'+'\n'
+    result += '  '+'  '+'  '+'<'+SHAPE+' points="'
     for point in right.points:
         result += str(point["x"])+","+str(point["y"])+" "
-    result += '" style="'+STYLE+'"/>'+'\n'
-    result += '</g>'+'\n'
+    result += '"/>'+'\n'
+    if opts["drillPoints"]:
+        result += '  '+'  '+'  '+'<g>'   +'\n'
+        for point in right.drillPoints:
+            result += '  '+'  '+'  '+'  '+'<circle cx="'+str(point["x"])+'" cy="'+str(point["y"])+'" r="2" stroke="red" fill="transparent" stroke-width="1"/>'+'\n'
+        result += '  '+'  '+'  '+'</g>'+'\n'     
+    result += '  '+'  '+'</g>'+'\n'
 
-    result += '<g transform="translate('+str(MARGIN+front.W+MARGIN+right.W+MARGIN)+','+str(MARGIN+top.H+MARGIN)+')">'+'\n'
-    result += '<'+SHAPE+' points="'
+    result += '  '+'  '+'<g transform="translate('+str(MARGIN+front.W+MARGIN+right.W+MARGIN)+','+str(MARGIN+top.H+MARGIN)+')">'+'\n'
+    result += '  '+'  '+'  '+'<'+SHAPE+' points="'
     for point in back.points:
         result += str(point["x"])+","+str(point["y"])+" "
-    result += '" style="'+STYLE+'"/>'+'\n'
-    result += '</g>'+'\n'
+    result += '"/>'+'\n'
+    if opts["drillPoints"]:
+        result += '  '+'  '+'  '+'<g>'   +'\n'
+        for point in back.drillPoints:
+            result += '  '+'  '+'  '+'  '+'<circle cx="'+str(point["x"])+'" cy="'+str(point["y"])+'" r="2" stroke="red" fill="transparent" stroke-width="1"/>'+'\n'
+        result += '  '+'  '+'  '+'</g>'+'\n'     
+    result += '  '+'  '+'</g>'+'\n'
 
-    result += '<g transform="translate('+str(MARGIN+front.W+MARGIN+right.W+MARGIN+back.W+MARGIN)+','+str(MARGIN+top.H+MARGIN)+')">'+'\n'
-    result += '<'+SHAPE+' points="'
+    result += '  '+'  '+'<g transform="translate('+str(MARGIN+front.W+MARGIN+right.W+MARGIN+back.W+MARGIN)+','+str(MARGIN+top.H+MARGIN)+')">'+'\n'
+    result += '  '+'  '+'  '+'<'+SHAPE+' points="'
     for point in left.points:
         result += str(point["x"])+","+str(point["y"])+" "
-    result += '" style="'+STYLE+'"/>'+'\n'
-    result += '</g>'+'\n'
+    result += '"/>'+'\n'
+    if opts["drillPoints"]:
+        result += '  '+'  '+'  '+'<g>'   +'\n'
+        for point in left.drillPoints:
+            result += '  '+'  '+'  '+'  '+'<circle cx="'+str(point["x"])+'" cy="'+str(point["y"])+'" r="2" stroke="red" fill="transparent" stroke-width="1"/>'+'\n'
+        result += '  '+'  '+'  '+'</g>'+'\n'     
+    result += '  '+'  '+'</g>'+'\n'
     
-    result += '<g transform="translate('+str(MARGIN+front.W+MARGIN)+','+str(MARGIN+top.H+MARGIN+front.H+MARGIN)+')">'+'\n'
-    result += '<'+SHAPE+' points="'
-    for point in top.points:
+    result += '  '+'  '+'<g transform="translate('+str(MARGIN+front.W+MARGIN)+','+str(MARGIN+top.H+MARGIN+front.H+MARGIN)+')">'+'\n'
+    result += '  '+'  '+'  '+'<'+SHAPE+' points="'
+    for point in bottom.points:
         result += str(point["x"])+","+str(point["y"])+" "
-    result += '" style="'+STYLE+'"/>'+'\n'
-    result += '</g>'+'\n'
+    result += '"/>'+'\n'
+    if opts["drillPoints"]:
+        result += '  '+'  '+'  '+'<g>'   +'\n'
+        for point in bottom.drillPoints:
+            result += '  '+'  '+'  '+'  '+'<circle cx="'+str(point["x"])+'" cy="'+str(point["y"])+'" r="2" stroke="red" fill="transparent" stroke-width="1"/>'+'\n'
+        result += '  '+'  '+'  '+'</g>'+'\n'     
+    result += '  '+'  '+'</g>'+'\n'
     
-    #result += '</g>'+'\n'
+    result += '  '+'</g>'+'\n'
+    
     result += '</svg>'
     return result;
         
 
-def box(H, W, L, thickness = 1, tabs = 4):
+def box(H, W, L, thickness = 1, tabs = 4, drillPoints=False):
     '''
     H, W and L are outer dimms of the requested box
     '''
     panels = {"front" : Panel(W, H, thickness, tabs),
               "side"  : Panel(L, H, thickness, tabs, reverse=True),
               "top"   : Panel(L, W, thickness, tabs)};
-    return pointsToSvg(panels["front"],panels["front"],panels["side"],panels["side"],panels["top"],panels["top"])
+    return pointsToSvg(panels["front"],panels["front"],panels["side"],panels["side"],panels["top"],panels["top"], opts = {"drillPoints": drillPoints})
 
 def main():
     HEIGHT=30
@@ -157,7 +206,9 @@ def makebox():
                         W = float(request.args.get('W')),
                         L = float(request.args.get('L')),
                         thickness = (float(request.args.get('T')) if request.args.get('T') else 1.0),
-						tabs = (int(request.args.get('tabs')) if request.args.get('tabs') else 4)),
+						tabs = (int(request.args.get('tabs')) if request.args.get('tabs') else 4),
+                        drillPoints = (True if request.args.get('gendrill') and request.args.get('gendrill') == "on" else False)
+                        ),
                     mimetype='image/svg+xml')
 
 @app.route("/")
