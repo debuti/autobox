@@ -14,29 +14,39 @@
 
 <!-- Latest compiled JavaScript -->
 <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js"></script> 
+
+<!-- Global site tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-29854873-2"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'UA-29854873-2');
+</script>
+
 </head>
 
 <body>
 <div class="container">
-  <h1>autobox configuration</h1>
+  <h1>autobox configurator</h1>
 </div> 
 
 <div class="container">
 <form action="/box.svg" method="get">
   <div class="form-group">
-    <label for="H">Height</label>
+    <label for="H">Height (mm)</label>
     <input type="number" class="form-control" id="H" name="H" placeholder="Height" value="200">
   </div>
   <div class="form-group">
-    <label for="W">Width</label>
+    <label for="W">Width (mm)</label>
     <input type="number" class="form-control" id="W" name="W" placeholder="Width" value="300">
   </div>
   <div class="form-group">
-    <label for="L">Length</label>
+    <label for="L">Length (mm)</label>
     <input type="number" class="form-control" id="L" name="L" placeholder="Length" value="400">
   </div>
   <div class="form-group">
-    <label for="T">Thickness</label>
+    <label for="T">Thickness (mm)</label>
     <input type="number" class="form-control" id="T" name="T" placeholder="Thickness" value="2">
   </div>
   <div class="form-group">
@@ -44,7 +54,7 @@
     <input type="number" class="form-control" id="tabs" name="tabs" placeholder="Tabs" value="4">
   </div>
   <div class="form-group">
-    <label for="T">Clearance</label>
+    <label for="T">Clearance (mm)</label>
     <input type="number" class="form-control" id="clearance" name="clearance" placeholder="Clearance" value="0.1" step="0.001" min="0">
   </div>
   <div class="form-check">

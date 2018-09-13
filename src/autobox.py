@@ -4,12 +4,9 @@ Script for generating .svg finger-jointed boxes
 All units are in mm
 '''
 
-
 ##TODO:
-## - Add clearance for tabs 
-## - Dont use polygon, use svg paths (https://www.w3schools.com/graphics/svg_path.asp). Check that works with jscut.org
 ## - Fix when user requests 0 tabs
-## - Fix document dimms
+## - Fix document dimms when printed
 
 # Imports
 import sys
@@ -95,103 +92,59 @@ class Panel:
                             "y": i*self._htabsize*2 + (offseta if i == 0  else 0) + ((-clearance if reverse else clearance) if i != 0 else 0)})
         if (offseta != 0 and i != 0): self.drillPoints.append(self.points[-1])
         
-#    self.points.append({"x": 0, "y": 0})
 
 # Function declarations
+
+def panelToPath(panel, absx, absy, fliph=False, flipv=False, drillPoints = False):
+    ind = '  '+'  '
+    result =  ind + '<g transform="translate('+str(absx)+','+str(absy)+')">'+'\n'
+    if fliph:
+        result += ind + '  '+'<g transform="translate(0,'+str(panel.H)+') scale(1, -1)">'+'\n'
+    if flipv:
+        result += ind + '  '+'<g transform="translate('+str(panel.W)+',0) scale(-1, 1)">'+'\n'
+
+    result += ind +'  '+'<path d="'
+    for idx, point in enumerate(panel.points):
+        if idx == 0: 
+            result += "M"
+        else:
+            result += "L"
+        result += str(point["x"])+" "+str(point["y"])+" "
+    result += 'Z"/>'+'\n'
+
+    if drillPoints:
+        result += ind +'  '+'<g>'   +'\n'
+        for point in panel.drillPoints:
+            result += ind +'  '+'  '+'<circle cx="'+str(point["x"])+'" cy="'+str(point["y"])+'" r="2" stroke="red" fill="transparent" stroke-width="1"/>'+'\n'
+        result += ind +'  '+'</g>'+'\n'     
+
+    if fliph:
+        result += ind +'  '+'</g>'+'\n'    
+    if flipv:
+        result += ind +'  '+'</g>'+'\n'    
+
+    result += ind +'</g>'+'\n'
+    return result
+
 def pointsToSvg(front, back, left, right, top, bottom, opts):
     MARGIN = 10;
-    #SHAPE="polyline";
-    SHAPE="polygon";
 
-    canvash = MARGIN+top.H+MARGIN+front.H+MARGIN+bottom.H
+    canvash = MARGIN+top.H+MARGIN+front.H+MARGIN+bottom.H+MARGIN
     canvasw = MARGIN+front.W+MARGIN+right.W+MARGIN+back.W+MARGIN+left.W+MARGIN
     
     result = '<?xml version="1.0" encoding="utf-8"?>'+'\n'
     result = '<!-- Created with autobox (http://autobx.herokuapp.com/) -->'+'\n'
 
-    result += '<svg version="1.1" xmlns="http://www.w3.org/2000/svg" height="'+str(canvash)+'mm" width="'+str(canvasw)+'mm">'+'\n'
-
-    #result += '<g transform="scale(35.43307)">'+'\n'
+    result += '<svg version="1.1" xmlns="http://www.w3.org/2000/svg" width="'+str(canvasw)+'" height="'+str(canvash)+'" viewbox="0 0 '+str(int(canvasw))+' '+str(int(canvash))+'">'+'\n'
     result += '  '+'<g fill="none" stroke="black" stroke-width="1">'     
 
-    result += '  '+'  '+'<g transform="translate('+str(MARGIN+front.W+MARGIN)+','+str(MARGIN)+')">'+'\n'
-    result += '  '+'  '+'  '+'<'+SHAPE+' points="'
-    for point in top.points:
-        result += str(point["x"])+","+str(point["y"])+" "
-    result += '"/>'+'\n'
-    if opts["drillPoints"]:
-        result += '  '+'  '+'  '+'<g>'   +'\n'
-        for point in top.drillPoints:
-            result += '  '+'  '+'  '+'  '+'<circle cx="'+str(point["x"])+'" cy="'+str(point["y"])+'" r="2" stroke="red" fill="transparent" stroke-width="1"/>'+'\n'
-        result += '  '+'  '+'  '+'</g>'+'\n'     
-    result += '  '+'  '+'</g>'+'\n'
+    result += panelToPath(top, MARGIN+front.W+MARGIN, MARGIN, drillPoints = opts["drillPoints"])
+    result += panelToPath(front, MARGIN, MARGIN+top.H+MARGIN, flipv=True, drillPoints = opts["drillPoints"])
+    result += panelToPath(right, MARGIN+front.W+MARGIN, MARGIN+top.H+MARGIN, drillPoints = opts["drillPoints"])
+    result += panelToPath(back, MARGIN+front.W+MARGIN+right.W+MARGIN, MARGIN+top.H+MARGIN, drillPoints = opts["drillPoints"])
+    result += panelToPath(left, MARGIN+front.W+MARGIN+right.W+MARGIN+back.W+MARGIN, MARGIN+top.H+MARGIN, flipv=True, drillPoints = opts["drillPoints"])
+    result += panelToPath(bottom, MARGIN+front.W+MARGIN, MARGIN+top.H+MARGIN+front.H+MARGIN, fliph=True, drillPoints = opts["drillPoints"])
     
-    result += '  '+'  '+'<g transform="translate('+str(MARGIN)+','+str(MARGIN+top.H+MARGIN)+')">'+'\n'
-    result += '  '+'  '+'  '+'<g transform="translate('+str(front.W)+',0) scale(-1, 1)">'+'\n'
-    result += '  '+'  '+'  '+'  '+'<'+SHAPE+' points="'
-    for point in front.points:
-        result += str(point["x"])+","+str(point["y"])+" "
-    result += '"/>'+'\n'
-    if opts["drillPoints"]:
-        result += '  '+'  '+'  '+'  '+'<g>'   +'\n'
-        for point in front.drillPoints:
-            result += '  '+'  '+'  '+'  '+'  '+'<circle cx="'+str(point["x"])+'" cy="'+str(point["y"])+'" r="2" stroke="red" fill="transparent" stroke-width="1"/>'+'\n'
-        result += '  '+'  '+'  '+'  '+'</g>'+'\n'     
-    result += '  '+'  '+'  '+'</g>'+'\n'  
-    result += '  '+'  '+'</g>'+'\n'
-
-    result += '  '+'  '+'<g transform="translate('+str(MARGIN+front.W+MARGIN)+','+str(MARGIN+top.H+MARGIN)+')">'+'\n'
-    result += '  '+'  '+'  '+'<'+SHAPE+' points="'
-    for point in right.points:
-        result += str(point["x"])+","+str(point["y"])+" "
-    result += '"/>'+'\n'
-    if opts["drillPoints"]:
-        result += '  '+'  '+'  '+'<g>'   +'\n'
-        for point in right.drillPoints:
-            result += '  '+'  '+'  '+'  '+'<circle cx="'+str(point["x"])+'" cy="'+str(point["y"])+'" r="2" stroke="red" fill="transparent" stroke-width="1"/>'+'\n'
-        result += '  '+'  '+'  '+'</g>'+'\n'     
-    result += '  '+'  '+'</g>'+'\n'
-
-    result += '  '+'  '+'<g transform="translate('+str(MARGIN+front.W+MARGIN+right.W+MARGIN)+','+str(MARGIN+top.H+MARGIN)+')">'+'\n'
-    result += '  '+'  '+'  '+'<'+SHAPE+' points="'
-    for point in back.points:
-        result += str(point["x"])+","+str(point["y"])+" "
-    result += '"/>'+'\n'
-    if opts["drillPoints"]:
-        result += '  '+'  '+'  '+'<g>'   +'\n'
-        for point in back.drillPoints:
-            result += '  '+'  '+'  '+'  '+'<circle cx="'+str(point["x"])+'" cy="'+str(point["y"])+'" r="2" stroke="red" fill="transparent" stroke-width="1"/>'+'\n'
-        result += '  '+'  '+'  '+'</g>'+'\n'     
-    result += '  '+'  '+'</g>'+'\n'
-
-    result += '  '+'  '+'<g transform="translate('+str(MARGIN+front.W+MARGIN+right.W+MARGIN+back.W+MARGIN)+','+str(MARGIN+top.H+MARGIN)+')">'+'\n'
-    result += '  '+'  '+'  '+'<g transform="translate('+str(left.W)+',0) scale(-1, 1)">'+'\n'
-    result += '  '+'  '+'  '+'  '+'<'+SHAPE+' points="'
-    for point in left.points:
-        result += str(point["x"])+","+str(point["y"])+" "
-    result += '"/>'+'\n'
-    if opts["drillPoints"]:
-        result += '  '+'  '+'  '+'  '+'<g>'   +'\n'
-        for point in left.drillPoints:
-            result += '  '+'  '+'  '+'  '+'  '+'<circle cx="'+str(point["x"])+'" cy="'+str(point["y"])+'" r="2" stroke="red" fill="transparent" stroke-width="1"/>'+'\n'
-        result += '  '+'  '+'  '+'  '+'</g>'+'\n'     
-    result += '  '+'  '+'  '+'</g>'+'\n'
-    result += '  '+'  '+'</g>'+'\n'
-    
-    result += '  '+'  '+'<g transform="translate('+str(MARGIN+front.W+MARGIN)+','+str(MARGIN+top.H+MARGIN+front.H+MARGIN)+')">'+'\n'
-    result += '  '+'  '+'  '+'<g transform="translate(0,'+str(bottom.H)+') scale(1, -1)">'+'\n'
-    result += '  '+'  '+'  '+'  '+'<'+SHAPE+' points="'
-    for point in bottom.points:
-        result += str(point["x"])+","+str(point["y"])+" "
-    result += '"/>'+'\n'
-    if opts["drillPoints"]:
-        result += '  '+'  '+'  '+'  '+'<g>'   +'\n'
-        for point in bottom.drillPoints:
-            result += '  '+'  '+'  '+'  '+'  '+'<circle cx="'+str(point["x"])+'" cy="'+str(point["y"])+'" r="2" stroke="red" fill="transparent" stroke-width="1"/>'+'\n'
-        result += '  '+'  '+'  '+'  '+'</g>'+'\n'     
-    result += '  '+'  '+'  '+'</g>'+'\n'
-    result += '  '+'  '+'</g>'+'\n'
-
     result += '  '+'</g>'+'\n'
     
     result += '</svg>'
@@ -207,13 +160,6 @@ def box(H, W, L, thickness = 1, tabs = 4, clearance = 0, drillPoints=False):
               "top"   : Panel(L, W, thickness, tabs, clearance = clearance)};
     return pointsToSvg(panels["front"],panels["front"],panels["side"],panels["side"],panels["top"],panels["top"], opts = {"drillPoints": drillPoints})
 
-def main():
-    HEIGHT=30
-    WIDTH=80
-    LENGTH=150
-    THICKNESS = 2
-    with open('output.svg', 'w+') as f:
-        f.write(box(H=HEIGHT, W=WIDTH, L=LENGTH, thickness = THICKNESS))
 
 @app.route("/box.svg")
 def makebox():
@@ -234,6 +180,19 @@ def hello():
 @app.route('/favicon.ico')
 def favicon():
     return send_from_directory(os.path.join(app.root_path, 'static'), 'favicon.ico', mimetype='image/vnd.microsoft.icon')
+
+
+def main():
+    '''
+    When called from cli
+    '''
+    HEIGHT=30
+    WIDTH=80
+    LENGTH=150
+    THICKNESS = 2
+    with open('output.svg', 'w+') as f:
+        f.write(box(H=HEIGHT, W=WIDTH, L=LENGTH, thickness = THICKNESS))
+
 
 # Main body
 if __name__ == '__main__':
