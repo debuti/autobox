@@ -4,6 +4,13 @@ Script for generating .svg finger-jointed boxes
 All units are in mm
 '''
 
+
+##TODO:
+## - Add clearance for tabs 
+## - Dont use polygon, use svg paths (https://www.w3schools.com/graphics/svg_path.asp). Check that works with jscut.org
+## - Fix when user requests 0 tabs
+## - Fix document dimms
+
 # Imports
 import sys
 import os
@@ -16,11 +23,11 @@ app = Flask(__name__)
 
 # Class declarations
 class Panel:
-  def __init__(self, W, H, thickness, tabs, reverse = False):
+  def __init__(self, W, H, thickness, tabs, reverse = False, clearance = 0):
     self.W = W;
-    self._wtabsize = W / (tabs*2)
+    self._wtabsize = W / (tabs*2) if (tabs>0) else W
     self.H = H;
-    self._htabsize = H / (tabs*2)
+    self._htabsize = H / (tabs*2) if (tabs>0) else H
     self.T = thickness;
 
     if (reverse):
@@ -33,59 +40,59 @@ class Panel:
     self.drillPoints = [];
     self.points = [];
     for i in range(0, tabs):
-        self.points.append({"x": i*self._wtabsize*2 + (offseta if i == 0 else 0),
+        self.points.append({"x": i*self._wtabsize*2 + (offseta if i == 0 else 0) + ((-clearance if reverse else clearance) if i != 0 else 0),
                             "y": offseta})
         if (offseta != 0 and i!=0): self.drillPoints.append(self.points[-1])
-        self.points.append({"x": i*self._wtabsize*2 + self._wtabsize,
+        self.points.append({"x": i*self._wtabsize*2 + self._wtabsize + (clearance if reverse else -clearance),
                             "y": offseta})
         if (offseta != 0): self.drillPoints.append(self.points[-1])
-        self.points.append({"x": i*self._wtabsize*2 + self._wtabsize, 
+        self.points.append({"x": i*self._wtabsize*2 + self._wtabsize + (clearance if reverse else -clearance), 
                             "y": offsetb})
         if (offsetb != 0): self.drillPoints.append(self.points[-1])
-        self.points.append({"x": i*self._wtabsize*2 + self._wtabsize*2 - (offseta if i == tabs-1 else 0) , 
+        self.points.append({"x": i*self._wtabsize*2 + self._wtabsize*2 - (offseta if i == tabs-1 else 0) + ((-clearance if reverse else clearance) if i != tabs-1 else 0), 
                             "y": offsetb})
         if (offsetb != 0 and i!=tabs-1): self.drillPoints.append(self.points[-1])
 
     for i in range(0, tabs):
         self.points.append({"x": W - offseta, 
-                            "y": i*self._htabsize*2 + (offsetb if i == 0 else 0)})
+                            "y": i*self._htabsize*2 + (offsetb if i == 0 else 0) + ((-clearance if reverse else clearance) if i != 0 else 0)})
         if (offseta != 0 and i!=0): self.drillPoints.append(self.points[-1])
         self.points.append({"x": W - offseta, 
-                            "y": i*self._htabsize*2 + self._htabsize})
+                            "y": i*self._htabsize*2 + self._htabsize + (clearance if reverse else -clearance)})
         if (offseta != 0): self.drillPoints.append(self.points[-1])
         self.points.append({"x": W - offsetb, 
-                            "y": i*self._htabsize*2 + self._htabsize})
+                            "y": i*self._htabsize*2 + self._htabsize + (clearance if reverse else -clearance)})
         if (offsetb != 0): self.drillPoints.append(self.points[-1])
         self.points.append({"x": W - offsetb , 
-                            "y": i*self._htabsize*2 + self._htabsize*2 - (offsetb if i == tabs-1 else 0)})
+                            "y": i*self._htabsize*2 + self._htabsize*2 - (offsetb if i == tabs-1 else 0) + ((-clearance if reverse else clearance) if i != tabs-1 else 0)})
         if (offsetb != 0 and i!=tabs-1): self.drillPoints.append(self.points[-1])
         
     for i in reversed(range(0, tabs)):
-        self.points.append({"x": i*self._wtabsize*2 + self._wtabsize*2 - (offsetb if i == tabs-1 else 0), 
+        self.points.append({"x": i*self._wtabsize*2 + self._wtabsize*2 - (offsetb if i == tabs-1 else 0) + ((-clearance if reverse else clearance) if i != tabs-1 else 0), 
                             "y": H - offsetb})
         if (offsetb != 0 and i!=tabs-1): self.drillPoints.append(self.points[-1])
-        self.points.append({"x": i*self._wtabsize*2 + self._wtabsize, 
+        self.points.append({"x": i*self._wtabsize*2 + self._wtabsize + (clearance if reverse else -clearance), 
                             "y": H - offsetb})
         if (offsetb != 0): self.drillPoints.append(self.points[-1])
-        self.points.append({"x": i*self._wtabsize*2 + self._wtabsize, 
+        self.points.append({"x": i*self._wtabsize*2 + self._wtabsize + (clearance if reverse else -clearance), 
                             "y": H - offseta})
         if (offseta != 0): self.drillPoints.append(self.points[-1])
-        self.points.append({"x": i*self._wtabsize*2 + (offsetb if i == 0 else 0), 
+        self.points.append({"x": i*self._wtabsize*2 + (offsetb if i == 0 else 0) + ((-clearance if reverse else clearance) if i != 0 else 0),
                             "y": H - offseta})
         if (offseta != 0 and i!=0): self.drillPoints.append(self.points[-1])
 
     for i in reversed(range(0, tabs)):
         self.points.append({"x": offsetb, 
-                            "y": i*self._htabsize*2 + self._htabsize*2 - (offseta if i == tabs-1  else 0)})
+                            "y": i*self._htabsize*2 + self._htabsize*2 - (offseta if i == tabs-1  else 0) + ((-clearance if reverse else clearance) if i != tabs-1 else 0)})
         if (offsetb != 0 and i!=tabs-1): self.drillPoints.append(self.points[-1])
         self.points.append({"x": offsetb, 
-                            "y": i*self._htabsize*2 + self._htabsize})
+                            "y": i*self._htabsize*2 + self._htabsize + (clearance if reverse else -clearance)})
         if (offsetb != 0): self.drillPoints.append(self.points[-1])
         self.points.append({"x": offseta, 
-                            "y": i*self._htabsize*2 + self._htabsize})
+                            "y": i*self._htabsize*2 + self._htabsize + (clearance if reverse else -clearance)})
         if (offseta != 0): self.drillPoints.append(self.points[-1])
         self.points.append({"x": offseta, 
-                            "y": i*self._htabsize*2 + (offseta if i == 0  else 0)})
+                            "y": i*self._htabsize*2 + (offseta if i == 0  else 0) + ((-clearance if reverse else clearance) if i != 0 else 0)})
         if (offseta != 0 and i != 0): self.drillPoints.append(self.points[-1])
         
 #    self.points.append({"x": 0, "y": 0})
@@ -100,6 +107,8 @@ def pointsToSvg(front, back, left, right, top, bottom, opts):
     canvasw = MARGIN+front.W+MARGIN+right.W+MARGIN+back.W+MARGIN+left.W+MARGIN
     
     result = '<?xml version="1.0" encoding="utf-8"?>'+'\n'
+    result = '<!-- Created with autobox (http://autobx.herokuapp.com/) -->'+'\n'
+
     result += '<svg version="1.1" xmlns="http://www.w3.org/2000/svg" height="'+str(canvash)+'mm" width="'+str(canvasw)+'mm">'+'\n'
 
     #result += '<g transform="scale(35.43307)">'+'\n'
@@ -118,15 +127,17 @@ def pointsToSvg(front, back, left, right, top, bottom, opts):
     result += '  '+'  '+'</g>'+'\n'
     
     result += '  '+'  '+'<g transform="translate('+str(MARGIN)+','+str(MARGIN+top.H+MARGIN)+')">'+'\n'
-    result += '  '+'  '+'  '+'<'+SHAPE+' points="'
+    result += '  '+'  '+'  '+'<g transform="translate('+str(front.W)+',0) scale(-1, 1)">'+'\n'
+    result += '  '+'  '+'  '+'  '+'<'+SHAPE+' points="'
     for point in front.points:
         result += str(point["x"])+","+str(point["y"])+" "
     result += '"/>'+'\n'
     if opts["drillPoints"]:
-        result += '  '+'  '+'  '+'<g>'   +'\n'
+        result += '  '+'  '+'  '+'  '+'<g>'   +'\n'
         for point in front.drillPoints:
-            result += '  '+'  '+'  '+'  '+'<circle cx="'+str(point["x"])+'" cy="'+str(point["y"])+'" r="2" stroke="red" fill="transparent" stroke-width="1"/>'+'\n'
-        result += '  '+'  '+'  '+'</g>'+'\n'     
+            result += '  '+'  '+'  '+'  '+'  '+'<circle cx="'+str(point["x"])+'" cy="'+str(point["y"])+'" r="2" stroke="red" fill="transparent" stroke-width="1"/>'+'\n'
+        result += '  '+'  '+'  '+'  '+'</g>'+'\n'     
+    result += '  '+'  '+'  '+'</g>'+'\n'  
     result += '  '+'  '+'</g>'+'\n'
 
     result += '  '+'  '+'<g transform="translate('+str(MARGIN+front.W+MARGIN)+','+str(MARGIN+top.H+MARGIN)+')">'+'\n'
@@ -154,42 +165,46 @@ def pointsToSvg(front, back, left, right, top, bottom, opts):
     result += '  '+'  '+'</g>'+'\n'
 
     result += '  '+'  '+'<g transform="translate('+str(MARGIN+front.W+MARGIN+right.W+MARGIN+back.W+MARGIN)+','+str(MARGIN+top.H+MARGIN)+')">'+'\n'
-    result += '  '+'  '+'  '+'<'+SHAPE+' points="'
+    result += '  '+'  '+'  '+'<g transform="translate('+str(left.W)+',0) scale(-1, 1)">'+'\n'
+    result += '  '+'  '+'  '+'  '+'<'+SHAPE+' points="'
     for point in left.points:
         result += str(point["x"])+","+str(point["y"])+" "
     result += '"/>'+'\n'
     if opts["drillPoints"]:
-        result += '  '+'  '+'  '+'<g>'   +'\n'
+        result += '  '+'  '+'  '+'  '+'<g>'   +'\n'
         for point in left.drillPoints:
-            result += '  '+'  '+'  '+'  '+'<circle cx="'+str(point["x"])+'" cy="'+str(point["y"])+'" r="2" stroke="red" fill="transparent" stroke-width="1"/>'+'\n'
-        result += '  '+'  '+'  '+'</g>'+'\n'     
+            result += '  '+'  '+'  '+'  '+'  '+'<circle cx="'+str(point["x"])+'" cy="'+str(point["y"])+'" r="2" stroke="red" fill="transparent" stroke-width="1"/>'+'\n'
+        result += '  '+'  '+'  '+'  '+'</g>'+'\n'     
+    result += '  '+'  '+'  '+'</g>'+'\n'
     result += '  '+'  '+'</g>'+'\n'
     
     result += '  '+'  '+'<g transform="translate('+str(MARGIN+front.W+MARGIN)+','+str(MARGIN+top.H+MARGIN+front.H+MARGIN)+')">'+'\n'
-    result += '  '+'  '+'  '+'<'+SHAPE+' points="'
+    result += '  '+'  '+'  '+'<g transform="translate(0,'+str(bottom.H)+') scale(1, -1)">'+'\n'
+    result += '  '+'  '+'  '+'  '+'<'+SHAPE+' points="'
     for point in bottom.points:
         result += str(point["x"])+","+str(point["y"])+" "
     result += '"/>'+'\n'
     if opts["drillPoints"]:
-        result += '  '+'  '+'  '+'<g>'   +'\n'
+        result += '  '+'  '+'  '+'  '+'<g>'   +'\n'
         for point in bottom.drillPoints:
-            result += '  '+'  '+'  '+'  '+'<circle cx="'+str(point["x"])+'" cy="'+str(point["y"])+'" r="2" stroke="red" fill="transparent" stroke-width="1"/>'+'\n'
-        result += '  '+'  '+'  '+'</g>'+'\n'     
+            result += '  '+'  '+'  '+'  '+'  '+'<circle cx="'+str(point["x"])+'" cy="'+str(point["y"])+'" r="2" stroke="red" fill="transparent" stroke-width="1"/>'+'\n'
+        result += '  '+'  '+'  '+'  '+'</g>'+'\n'     
+    result += '  '+'  '+'  '+'</g>'+'\n'
     result += '  '+'  '+'</g>'+'\n'
-    
+
     result += '  '+'</g>'+'\n'
     
     result += '</svg>'
     return result;
         
 
-def box(H, W, L, thickness = 1, tabs = 4, drillPoints=False):
+def box(H, W, L, thickness = 1, tabs = 4, clearance = 0, drillPoints=False):
     '''
     H, W and L are outer dimms of the requested box
     '''
-    panels = {"front" : Panel(W, H, thickness, tabs),
-              "side"  : Panel(L, H, thickness, tabs, reverse=True),
-              "top"   : Panel(L, W, thickness, tabs)};
+    panels = {"front" : Panel(W, H, thickness, tabs, clearance = clearance),
+              "side"  : Panel(L, H, thickness, tabs, reverse=True, clearance = clearance),
+              "top"   : Panel(L, W, thickness, tabs, clearance = clearance)};
     return pointsToSvg(panels["front"],panels["front"],panels["side"],panels["side"],panels["top"],panels["top"], opts = {"drillPoints": drillPoints})
 
 def main():
@@ -207,6 +222,7 @@ def makebox():
                         L = float(request.args.get('L')),
                         thickness = (float(request.args.get('T')) if request.args.get('T') else 1.0),
 						tabs = (int(request.args.get('tabs')) if request.args.get('tabs') else 4),
+                        clearance = (float(request.args.get('clearance')) if request.args.get('clearance') else 0.0),
                         drillPoints = (True if request.args.get('gendrill') and request.args.get('gendrill') == "on" else False)
                         ),
                     mimetype='image/svg+xml')
